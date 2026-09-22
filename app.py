@@ -83,7 +83,7 @@ outside_services = st.number_input(
     step=10.0,
 )
 markup_pct = st.slider(
-    "Material & Services Markup (%)", min_value=0, max_value=50, value=20, step=5
+    "Material & Services Markup (%)", min_value=0, max_value=60, value=20, step=5
 )
 
 # Calculations
@@ -100,8 +100,14 @@ st.divider()
 # Final Summary Display
 st.header("📋 Quote Summary")
 st.write(f"**Job:** {job_name} ({part_qty} units)")
-st.write(f"**Total Labor Time:** {total_hours:.1f} Hours @ ${hourly_rate:.2f}/hr = **${labor_cost:,.2f}**")
-st.write(f"**Materials & Outside Services:** ${mats_and_services:,.2f} (+{markup_pct}% Markup = **${mats_and_services_marked_up:,.2f}**)")
+st.write(
+    f"**Total Labor Time:** {total_hours:.1f} Hours @ ${hourly_rate:.2f}/hr ="
+    f" **${labor_cost:,.2f}**"
+)
+st.write(
+    f"**Materials & Outside Services:** ${mats_and_services:,.2f}"
+    f" (+{markup_pct}% Markup = **${mats_and_services_marked_up:,.2f}**)"
+)
 st.write(f"**Estimated Delivery:** {lead_time_days} business days")
 
 st.subheader(f"Total Quote: **${total_quote:,.2f}**")
@@ -114,7 +120,10 @@ quote_data = [
     ("Material Cost ($)", f"{material_cost:.2f}"),
     ("Outside Services ($)", f"{outside_services:.2f}"),
     ("Material & Services Markup (%)", f"{markup_pct}%"),
-    ("Materials & Services Total (w/ Markup) ($)", f"{mats_and_services_marked_up:.2f}"),
+    (
+        "Materials & Services Total (w/ Markup) ($)",
+        f"{mats_and_services_marked_up:.2f}",
+    ),
     ("Hourly Labor Rate ($/hr)", f"{hourly_rate:.2f}"),
     ("Setup Hours", f"{setup_hrs:.1f}"),
     ("CNC Hours", f"{cnc_hrs:.1f}"),
