@@ -50,7 +50,7 @@ material_cost = st.number_input(
     "Total Material Cost ($)", min_value=0.0, value=50.0, step=5.0
 )
 
-# Step 3: Labor Hours per Department
+# Step 3: Labor Hours per Department ($120/hr flat rate)
 st.header("3. Labor Hours ($120/hr)")
 hourly_rate = 120.0  # Shop hourly rate set to $120/hr
 
@@ -69,7 +69,7 @@ with col2:
     )
 
 total_hours = setup_hrs + cnc_hrs + manual_hrs + inspection_hrs
-labor_cost = total_hours * hourly_rate
+labor_cost = total_hours * hourly_rate  # No markup applied to labor
 
 # Step 4: Additional Factors
 st.header("4. Lead Time & Extras")
@@ -83,12 +83,16 @@ outside_services = st.number_input(
     step=10.0,
 )
 markup_pct = st.slider(
-    "Profit Markup (%)", min_value=0, max_value=50, value=20, step=5
+    "Material & Services Markup (%)", min_value=0, max_value=50, value=20, step=5
 )
 
 # Calculations
-subtotal = material_cost + labor_cost + outside_services
-total_quote = subtotal * (1 + (markup_pct / 100))
+mats_and_services = material_cost + outside_services
+mats_services_markup = mats_and_services * (markup_pct / 100.0)
+mats_and_services_marked_up = mats_and_services + mats_services_markup
+
+# Total Quote = (Material + Outside Services marked up) + Flat Labor Cost
+total_quote = mats_and_services_marked_up + labor_cost
 per_unit_price = total_quote / part_qty
 
 st.divider()
@@ -96,8 +100,8 @@ st.divider()
 # Final Summary Display
 st.header("📋 Quote Summary")
 st.write(f"**Job:** {job_name} ({part_qty} units)")
-st.write(f"**Total Labor Time:** {total_hours:.1f} Hours @ ${hourly_rate:.2f}/hr")
-st.write(f"**Total Labor Cost:** ${labor_cost:,.2f}")
+st.write(f"**Total Labor Time:** {total_hours:.1f} Hours @ ${hourly_rate:.2f}/hr = **${labor_cost:,.2f}**")
+st.write(f"**Materials & Outside Services:** ${mats_and_services:,.2f} (+{markup_pct}% Markup = **${mats_and_services_marked_up:,.2f}**)")
 st.write(f"**Estimated Delivery:** {lead_time_days} business days")
 
 st.subheader(f"Total Quote: **${total_quote:,.2f}**")
@@ -108,6 +112,9 @@ quote_data = [
     ("Job Name", job_name),
     ("Quantity", part_qty),
     ("Material Cost ($)", f"{material_cost:.2f}"),
+    ("Outside Services ($)", f"{outside_services:.2f}"),
+    ("Material & Services Markup (%)", f"{markup_pct}%"),
+    ("Materials & Services Total (w/ Markup) ($)", f"{mats_and_services_marked_up:.2f}"),
     ("Hourly Labor Rate ($/hr)", f"{hourly_rate:.2f}"),
     ("Setup Hours", f"{setup_hrs:.1f}"),
     ("CNC Hours", f"{cnc_hrs:.1f}"),
@@ -115,8 +122,6 @@ quote_data = [
     ("Inspection Hours", f"{inspection_hrs:.1f}"),
     ("Total Labor Hours", f"{total_hours:.1f}"),
     ("Total Labor Cost ($)", f"{labor_cost:.2f}"),
-    ("Outside Services ($)", f"{outside_services:.2f}"),
-    ("Markup (%)", f"{markup_pct}%"),
     ("Estimated Lead Time (Days)", lead_time_days),
     ("Price Per Unit ($)", f"{per_unit_price:.2f}"),
     ("TOTAL QUOTE ($)", f"{total_quote:.2f}"),
