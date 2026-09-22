@@ -1,4 +1,6 @@
 import io
+import docx
+import openpyxl
 import pandas as pd
 import streamlit as st
 
@@ -49,8 +51,8 @@ material_cost = st.number_input(
 )
 
 # Step 3: Labor Hours per Department
-st.header("3. Labor Hours")
-hourly_rate = 75.0  # Default shop hourly rate
+st.header("3. Labor Hours ($120/hr)")
+hourly_rate = 120.0  # Shop hourly rate set to $120/hr
 
 col1, col2 = st.columns(2)
 with col1:
@@ -94,57 +96,90 @@ st.divider()
 # Final Summary Display
 st.header("📋 Quote Summary")
 st.write(f"**Job:** {job_name} ({part_qty} units)")
-st.write(f"**Total Labor Time:** {total_hours:.1f} Hours")
+st.write(f"**Total Labor Time:** {total_hours:.1f} Hours @ ${hourly_rate:.2f}/hr")
+st.write(f"**Total Labor Cost:** ${labor_cost:,.2f}")
 st.write(f"**Estimated Delivery:** {lead_time_days} business days")
 
 st.subheader(f"Total Quote: **${total_quote:,.2f}**")
 st.caption(f"(${per_unit_price:,.2f} per part)")
 
-# Prepare downloadable file
-quote_data = {
-    "Field": [
-        "Job Name",
-        "Quantity",
-        "Material Cost ($)",
-        "Setup Hours",
-        "CNC Hours",
-        "Manual Hours",
-        "Inspection Hours",
-        "Total Labor Hours",
-        "Labor Cost ($)",
-        "Outside Services ($)",
-        "Markup (%)",
-        "Estimated Lead Time (Days)",
-        "Price Per Unit ($)",
-        "TOTAL QUOTE ($)",
-    ],
-    "Value": [
-        job_name,
-        part_qty,
-        f"{material_cost:.2f}",
-        f"{setup_hrs:.1f}",
-        f"{cnc_hrs:.1f}",
-        f"{manual_hrs:.1f}",
-        f"{inspection_hrs:.1f}",
-        f"{total_hours:.1f}",
-        f"{labor_cost:.2f}",
-        f"{outside_services:.2f}",
-        f"{markup_pct}%",
-        lead_time_days,
-        f"{per_unit_price:.2f}",
-        f"{total_quote:.2f}",
-    ],
-}
-
-df_quote = pd.DataFrame(quote_data)
-csv_buffer = df_quote.to_csv(index=False)
+# Prepare downloadable file data structure
+quote_data = [
+    ("Job Name", job_name),
+    ("Quantity", part_qty),
+    ("Material Cost ($)", f"{material_cost:.2f}"),
+    ("Hourly Labor Rate ($/hr)", f"{hourly_rate:.2f}"),
+    ("Setup Hours", f"{setup_hrs:.1f}"),
+    ("CNC Hours", f"{cnc_hrs:.1f}"),
+    ("Manual Hours", f"{manual_hrs:.1f}"),
+    ("Inspection Hours", f"{inspection_hrs:.1f}"),
+    ("Total Labor Hours", f"{total_hours:.1f}"),
+    ("Total Labor Cost ($)", f"{labor_cost:.2f}"),
+    ("Outside Services ($)", f"{outside_services:.2f}"),
+    ("Markup (%)", f"{markup_pct}%"),
+    ("Estimated Lead Time (Days)", lead_time_days),
+    ("Price Per Unit ($)", f"{per_unit_price:.2f}"),
+    ("TOTAL QUOTE ($)", f"{total_quote:.2f}"),
+]
 
 st.divider()
 
-# Download Button
-st.download_button(
-    label="📥 Download Quote File",
-    data=csv_buffer,
-    file_name=f"Quote_{job_name.replace(' ', '_')}.csv",
-    mime="text/csv",
+# Select File Format
+st.header("💾 Download Quote")
+file_format = st.radio(
+    "Select File Format:",
+    options=["Excel (.xlsx)", "Word Document (.docx)", "CSV (.csv)"],
+    horizontal=True,
 )
+
+safe_job_name = job_name.replace(" ", "_")
+
+if file_format == "Excel (.xlsx)":
+    df_quote = pd.DataFrame(quote_data, columns=["Field", "Value"])
+    excel_buffer = io.BytesIO()
+    with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+        df_quote.to_excel(writer, index=False, sheet_name="Quote Summary")
+    excel_data = excel_buffer.getvalue()
+
+    st.download_button(
+        label="📥 Download Excel File (.xlsx)",
+        data=excel_data,
+        file_name=f"Quote_{safe_job_name}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+elif file_format == "Word Document (.docx)":
+    doc = docx.Document()
+    doc.add_heading(f"Machine Shop Quote: {job_name}", level=1)
+
+    table = doc.add_table(rows=1, cols=2)
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = "Field"
+    hdr_cells[1].text = "Value"
+
+    for field, val in quote_data:
+        row_cells = table.add_row().cells
+        row_cells[0].text = str(field)
+        row_cells[1].text = str(val)
+
+    doc_buffer = io.BytesIO()
+    doc.save(doc_buffer)
+    doc_data = doc_buffer.getvalue()
+
+    st.download_button(
+        label="📥 Download Word File (.docx)",
+        data=doc_data,
+        file_name=f"Quote_{safe_job_name}.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+
+else:  # CSV (.csv)
+    df_quote = pd.DataFrame(quote_data, columns=["Field", "Value"])
+    csv_buffer = df_quote.to_csv(index=False)
+
+    st.download_button(
+        label="📥 Download CSV File (.csv)",
+        data=csv_buffer,
+        file_name=f"Quote_{safe_job_name}.csv",
+        mime="text/csv",
+    )
