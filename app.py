@@ -71,10 +71,10 @@ with col2:
 total_hours = setup_hrs + cnc_hrs + manual_hrs + inspection_hrs
 labor_cost = total_hours * hourly_rate  # No markup applied to labor
 
-# Step 4: Additional Factors
-st.header("4. Lead Time & Extras")
+# Step 4: Additional Factors, Shipping & Extras
+st.header("4. Lead Time, Shipping & Extras")
 lead_time_days = st.slider(
-    "Estimated Lead Time (Days)", min_value=1, max_value=30, value=5
+    "Shop Lead Time (Production Days)", min_value=1, max_value=30, value=5
 )
 outside_services = st.number_input(
     "Outside Services ($) (Heat Treat, Anodize, etc.)",
@@ -86,13 +86,26 @@ markup_pct = st.slider(
     "Material & Services Markup (%)", min_value=0, max_value=60, value=20, step=5
 )
 
+st.subheader("Shipping Details")
+col_ship1, col_ship2 = st.columns(2)
+with col_ship1:
+    shipping_cost = st.number_input(
+        "Shipping Cost ($)", min_value=0.0, value=25.0, step=5.0
+    )
+with col_ship2:
+    shipping_days = st.slider(
+        "Shipping Transit Time (Days)", min_value=1, max_value=14, value=3
+    )
+
+total_delivery_days = lead_time_days + shipping_days
+
 # Calculations
 mats_and_services = material_cost + outside_services
 mats_services_markup = mats_and_services * (markup_pct / 100.0)
 mats_and_services_marked_up = mats_and_services + mats_services_markup
 
-# Total Quote = (Material + Outside Services marked up) + Flat Labor Cost
-total_quote = mats_and_services_marked_up + labor_cost
+# Total Quote = (Material + Outside Services marked up) + Flat Labor Cost + Shipping Cost
+total_quote = mats_and_services_marked_up + labor_cost + shipping_cost
 per_unit_price = total_quote / part_qty
 
 st.divider()
@@ -108,7 +121,11 @@ st.write(
     f"**Materials & Outside Services:** ${mats_and_services:,.2f}"
     f" (+{markup_pct}% Markup = **${mats_and_services_marked_up:,.2f}**)"
 )
-st.write(f"**Estimated Delivery:** {lead_time_days} business days")
+st.write(f"**Shipping Cost:** **${shipping_cost:,.2f}**")
+st.write(
+    f"**Estimated Timeline:** {lead_time_days} days production +"
+    f" {shipping_days} days shipping = **{total_delivery_days} total business days**"
+)
 
 st.subheader(f"Total Quote: **${total_quote:,.2f}**")
 st.caption(f"(${per_unit_price:,.2f} per part)")
@@ -131,7 +148,10 @@ quote_data = [
     ("Inspection Hours", f"{inspection_hrs:.1f}"),
     ("Total Labor Hours", f"{total_hours:.1f}"),
     ("Total Labor Cost ($)", f"{labor_cost:.2f}"),
-    ("Estimated Lead Time (Days)", lead_time_days),
+    ("Shipping Cost ($)", f"{shipping_cost:.2f}"),
+    ("Shop Lead Time (Days)", lead_time_days),
+    ("Shipping Transit Time (Days)", shipping_days),
+    ("Total Estimated Delivery (Days)", total_delivery_days),
     ("Price Per Unit ($)", f"{per_unit_price:.2f}"),
     ("TOTAL QUOTE ($)", f"{total_quote:.2f}"),
 ]
