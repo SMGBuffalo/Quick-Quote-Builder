@@ -50,9 +50,11 @@ material_cost = st.number_input(
     "Total Material Cost ($)", min_value=0.0, value=50.0, step=5.0
 )
 
-# Step 3: Labor Hours per Department ($120/hr flat rate)
-st.header("3. Labor Hours ($120/hr)")
-hourly_rate = 120.0  # Shop hourly rate set to $120/hr
+# Step 3: Labor Hours & Adjustable Rate per Hour
+st.header("3. Labor Hours & Rate")
+hourly_rate = st.slider(
+    "Hourly Labor Rate ($/hr)", min_value=40, max_value=200, value=120, step=5
+)
 
 col1, col2 = st.columns(2)
 with col1:
@@ -69,7 +71,7 @@ with col2:
     )
 
 total_hours = setup_hrs + cnc_hrs + manual_hrs + inspection_hrs
-labor_cost = total_hours * hourly_rate  # No markup applied to labor
+labor_cost = total_hours * hourly_rate  # Calculated using selected hourly rate
 
 # Step 4: Additional Factors, Shipping & Extras
 st.header("4. Lead Time, Shipping & Extras")
@@ -104,7 +106,7 @@ mats_and_services = material_cost + outside_services
 mats_services_markup = mats_and_services * (markup_pct / 100.0)
 mats_and_services_marked_up = mats_and_services + mats_services_markup
 
-# Total Quote = (Material + Outside Services marked up) + Flat Labor Cost + Shipping Cost
+# Total Quote = (Material + Outside Services marked up) + Dynamic Labor Cost + Shipping Cost
 total_quote = mats_and_services_marked_up + labor_cost + shipping_cost
 per_unit_price = total_quote / part_qty
 
@@ -114,7 +116,7 @@ st.divider()
 st.header("📋 Quote Summary")
 st.write(f"**Job:** {job_name} ({part_qty} units)")
 st.write(
-    f"**Total Labor Time:** {total_hours:.1f} Hours @ ${hourly_rate:.2f}/hr ="
+    f"**Total Labor Time:** {total_hours:.1f} Hours @ ${hourly_rate}/hr ="
     f" **${labor_cost:,.2f}**"
 )
 st.write(
