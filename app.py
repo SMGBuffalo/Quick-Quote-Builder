@@ -50,17 +50,27 @@ material_cost = st.number_input(
     "Total Material Cost ($)", min_value=0.0, value=50.0, step=5.0
 )
 
-# Step 3: Labor Hours & Adjustable Rate per Hour
+# Step 3: Labor Hours & Rate
 st.header("3. Labor Hours & Rate")
 hourly_rate = st.slider(
     "Hourly Labor Rate ($/hr)", min_value=40, max_value=200, value=120, step=5
 )
 
+st.write("**Hours Per Department:**")
 col1, col2 = st.columns(2)
 with col1:
     setup_hrs = st.number_input("Setup Hours", min_value=0.0, value=1.0, step=0.5)
     cnc_hrs = st.number_input(
         "CNC Machining Hours", min_value=0.0, value=2.0, step=0.5
+    )
+    fab_hrs = st.number_input(
+        "Fabrication (Laser, Punch, Brake, Saw) Hours",
+        min_value=0.0,
+        value=0.0,
+        step=0.5,
+    )
+    weld_hrs = st.number_input(
+        "Weld Hours", min_value=0.0, value=0.0, step=0.5
     )
 with col2:
     manual_hrs = st.number_input(
@@ -69,9 +79,20 @@ with col2:
     inspection_hrs = st.number_input(
         "Inspection / QC Hours", min_value=0.0, value=0.5, step=0.5
     )
+    paint_hrs = st.number_input(
+        "Paint Hours", min_value=0.0, value=0.0, step=0.5
+    )
 
-total_hours = setup_hrs + cnc_hrs + manual_hrs + inspection_hrs
-labor_cost = total_hours * hourly_rate  # Calculated using selected hourly rate
+total_hours = (
+    setup_hrs
+    + cnc_hrs
+    + fab_hrs
+    + weld_hrs
+    + manual_hrs
+    + inspection_hrs
+    + paint_hrs
+)
+labor_cost = total_hours * hourly_rate  # Calculated across all 7 departments
 
 # Step 4: Additional Factors, Shipping & Extras
 st.header("4. Lead Time, Shipping & Extras")
@@ -146,7 +167,10 @@ quote_data = [
     ("Hourly Labor Rate ($/hr)", f"{hourly_rate:.2f}"),
     ("Setup Hours", f"{setup_hrs:.1f}"),
     ("CNC Hours", f"{cnc_hrs:.1f}"),
+    ("Fabrication Hours (Laser/Punch/Brake/Saw)", f"{fab_hrs:.1f}"),
+    ("Weld Hours", f"{weld_hrs:.1f}"),
     ("Manual Hours", f"{manual_hrs:.1f}"),
+    ("Paint Hours", f"{paint_hrs:.1f}"),
     ("Inspection Hours", f"{inspection_hrs:.1f}"),
     ("Total Labor Hours", f"{total_hours:.1f}"),
     ("Total Labor Cost ($)", f"{labor_cost:.2f}"),
