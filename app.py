@@ -2,11 +2,11 @@ import io
 import docx
 import openpyxl
 import pandas as pd
+import streamlit as st
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-import streamlit as st
 
 st.set_page_config(page_title="Quick Quote Builder", layout="centered")
 
@@ -96,7 +96,7 @@ total_hours = (
     + inspection_hrs
     + paint_hrs
 )
-labor_cost = total_hours * hourly_rate  # Calculated across all departments
+labor_cost = total_hours * hourly_rate  # Calculated across all 7 departments
 
 # Step 4: Additional Factors, Shipping & Extras
 st.header("4. Lead Time, Shipping & Extras")
@@ -131,7 +131,7 @@ mats_and_services = material_cost + outside_services
 mats_services_markup = mats_and_services * (markup_pct / 100.0)
 mats_and_services_marked_up = mats_and_services + mats_services_markup
 
-# Total Quote Calculation
+# Total Quote = (Material + Outside Services marked up) + Dynamic Labor Cost + Shipping Cost
 total_quote = mats_and_services_marked_up + labor_cost + shipping_cost
 per_unit_price = total_quote / part_qty
 
@@ -209,31 +209,31 @@ if file_format == "PDF (.pdf)":
         bottomMargin=36,
     )
     styles = getSampleStyleSheet()
-    
+
     title_style = ParagraphStyle(
-        'TitleStyle',
-        parent=styles['Heading1'],
+        "TitleStyle",
+        parent=styles["Heading1"],
         fontSize=22,
         leading=26,
-        textColor=colors.HexColor('#1B365D'),
+        textColor=colors.HexColor("#1B365D"),
         alignment=0,
         spaceAfter=15,
     )
-    
+
     cell_style = ParagraphStyle(
-        'CellStyle',
-        parent=styles['Normal'],
+        "CellStyle",
+        parent=styles["Normal"],
         fontSize=10,
         leading=13,
     )
-    
+
     header_cell_style = ParagraphStyle(
-        'HeaderCellStyle',
-        parent=styles['Normal'],
+        "HeaderCellStyle",
+        parent=styles["Normal"],
         fontSize=11,
         leading=14,
         textColor=colors.white,
-        fontName='Helvetica-Bold',
+        fontName="Helvetica-Bold",
     )
 
     story = []
@@ -242,25 +242,25 @@ if file_format == "PDF (.pdf)":
 
     table_data = [[
         Paragraph("Field", header_cell_style),
-        Paragraph("Value", header_cell_style)
+        Paragraph("Value", header_cell_style),
     ]]
 
     for field, val in quote_data:
         table_data.append([
             Paragraph(str(field), cell_style),
-            Paragraph(str(val), cell_style)
+            Paragraph(str(val), cell_style),
         ])
 
     pdf_table = Table(table_data, colWidths=[320, 220])
     pdf_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1B365D')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8F9FA')]),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1B365D")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CCCCCC")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8F9FA")]),
     ]))
 
     story.append(pdf_table)
