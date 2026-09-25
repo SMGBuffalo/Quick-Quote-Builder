@@ -1,9 +1,3 @@
-"""
-Machine Shop Quote Builder
-A Streamlit app for generating quick job quotes and exporting them
-as PDF, Excel, Word, or CSV.
-"""
-
 import io
 from datetime import date
 
