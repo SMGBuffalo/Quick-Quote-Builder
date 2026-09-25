@@ -2,6 +2,10 @@ import io
 import docx
 import openpyxl
 import pandas as pd
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import streamlit as st
 
 st.set_page_config(page_title="Quick Quote Builder", layout="centered")
@@ -92,7 +96,7 @@ total_hours = (
     + inspection_hrs
     + paint_hrs
 )
-labor_cost = total_hours * hourly_rate  # Calculated across all 7 departments
+labor_cost = total_hours * hourly_rate  # Calculated across all departments
 
 # Step 4: Additional Factors, Shipping & Extras
 st.header("4. Lead Time, Shipping & Extras")
@@ -127,7 +131,7 @@ mats_and_services = material_cost + outside_services
 mats_services_markup = mats_and_services * (markup_pct / 100.0)
 mats_and_services_marked_up = mats_and_services + mats_services_markup
 
-# Total Quote = (Material + Outside Services marked up) + Dynamic Labor Cost + Shipping Cost
+# Total Quote Calculation
 total_quote = mats_and_services_marked_up + labor_cost + shipping_cost
 per_unit_price = total_quote / part_qty
 
@@ -188,13 +192,89 @@ st.divider()
 st.header("💾 Download Quote")
 file_format = st.radio(
     "Select File Format:",
-    options=["Excel (.xlsx)", "Word Document (.docx)", "CSV (.csv)"],
+    options=["PDF (.pdf)", "Excel (.xlsx)", "Word Document (.docx)", "CSV (.csv)"],
     horizontal=True,
 )
 
 safe_job_name = job_name.replace(" ", "_")
 
-if file_format == "Excel (.xlsx)":
+if file_format == "PDF (.pdf)":
+    pdf_buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        pdf_buffer,
+        pagesize=letter,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36,
+    )
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle(
+        'TitleStyle',
+        parent=styles['Heading1'],
+        fontSize=22,
+        leading=26,
+        textColor=colors.HexColor('#1B365D'),
+        alignment=0,
+        spaceAfter=15,
+    )
+    
+    cell_style = ParagraphStyle(
+        'CellStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=13,
+    )
+    
+    header_cell_style = ParagraphStyle(
+        'HeaderCellStyle',
+        parent=styles['Normal'],
+        fontSize=11,
+        leading=14,
+        textColor=colors.white,
+        fontName='Helvetica-Bold',
+    )
+
+    story = []
+    story.append(Paragraph(f"🛠️ Machine Shop Quote: {job_name}", title_style))
+    story.append(Spacer(1, 10))
+
+    table_data = [[
+        Paragraph("Field", header_cell_style),
+        Paragraph("Value", header_cell_style)
+    ]]
+
+    for field, val in quote_data:
+        table_data.append([
+            Paragraph(str(field), cell_style),
+            Paragraph(str(val), cell_style)
+        ])
+
+    pdf_table = Table(table_data, colWidths=[320, 220])
+    pdf_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1B365D')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8F9FA')]),
+    ]))
+
+    story.append(pdf_table)
+    doc.build(story)
+    pdf_data = pdf_buffer.getvalue()
+
+    st.download_button(
+        label="📥 Download PDF Document (.pdf)",
+        data=pdf_data,
+        file_name=f"Quote_{safe_job_name}.pdf",
+        mime="application/pdf",
+    )
+
+elif file_format == "Excel (.xlsx)":
     df_quote = pd.DataFrame(quote_data, columns=["Field", "Value"])
     excel_buffer = io.BytesIO()
     with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
